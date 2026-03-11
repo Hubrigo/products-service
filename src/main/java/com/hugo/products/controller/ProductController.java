@@ -52,4 +52,11 @@ public class ProductController {
     ) {
         return ResponseEntity.ok(productService.update(id, request));
     }
+
+    @GetMapping("/{id}/exists")
+    public ResponseEntity<Void> existsById(@PathVariable UUID id) {
+        productService.validateExists(id);
+        return ResponseEntity.ok().build();
+    }
+
 }

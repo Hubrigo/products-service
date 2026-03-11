@@ -8,6 +8,7 @@ import com.hugo.products.model.Product;
 import com.hugo.products.model.ProductStatus;
 import com.hugo.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -24,7 +26,9 @@ public class ProductService {
     private final ProductMapper productMapper;
 
     public ProductResponse create(ProductRequest request) {
+        log.info("Creating product with sku={}, name={}", request.getSku(), request.getName());
         if (productRepository.existsBySku(request.getSku())) {
+            log.warn("Product creation failed because sku={} already exists", request.getSku());
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "A product with this SKU already exists"
@@ -33,6 +37,8 @@ public class ProductService {
 
         Product product = productMapper.toEntity(request);
         Product savedProduct = productRepository.save(product);
+
+        log.info("Product created successfully with id={}, sku={}", savedProduct.getId(), savedProduct.getSku());
 
         return productMapper.toResponse(savedProduct);
     }
@@ -120,4 +126,16 @@ public class ProductService {
         Product updatedProduct = productRepository.save(product);
         return productMapper.toResponse(updatedProduct);
     }
+
+    public void validateExists(UUID id) {
+        log.info("Validating existence of productId={}", id);
+        if (!productRepository.existsById(id)) {
+            log.warn("Product not found for productId={}", id);
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Product not found"
+            );
+        }
+    }
+
 }
